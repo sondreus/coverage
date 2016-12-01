@@ -42,7 +42,7 @@ wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
                                 "telephones")
 ```
 
-Suppose we next are interested in how well trade in services as a percentage of GDP predicts GDP per capita.
+Suppose we next are interested in how well "trade in services as a percentage of GDP" predicts "GDP per capita".
 
 ``` r
 lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
@@ -69,7 +69,7 @@ summary(lm.fit)
     ## Multiple R-squared:  0.1044, Adjusted R-squared:  0.09857 
     ## F-statistic: 17.84 on 1 and 153 DF,  p-value: 4.112e-05
 
-So we have a some data and statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tideous. Let's instead apply the coverage function:
+So we have some data and a statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tidious. Let's instead apply the coverage function:
 
 ``` r
 library("coverage")
@@ -85,7 +85,7 @@ library("coverage")
     ## 4      Tanzania                 25                  25     1988-2012
     ## 2 United States                 43                  43     1970-2012
 
-This is useful, but even more useful would be a visual representation:
+Let us also request a visual representation:
 
 ``` r
  library("ggplot2", verbose = FALSE)
@@ -106,7 +106,7 @@ Or a latex table:
 
     ## 
     ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Thu, Dec 01, 2016 - 10:50:47 AM
+    ## % Date and time: Thu, Dec 01, 2016 - 10:55:58 AM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
@@ -157,6 +157,18 @@ Suppose next that we have data that may have multiple observations per time and 
 ``` r
 techdata <- readRDS("3d_example.RDS")
 
+head(techdata)
+```
+
+    ##                             country_name year  tpop upop xlrealgdp      technology adoption_lvl
+    ## 1526412                         Malaysia 1970 10390 1216     22684      pest_total           NA
+    ## 1526413 Lao People's Democratic Republic 1970  2962  156      2127     vehicle_car        11000
+    ## 1526417                  Solomon Islands 1970    NA   NA        NA steel_stainless           NA
+    ## 1526418                         Thailand 1970 36370 2313     62842     steel_other           NA
+    ## 1526419                         Thailand 1970 36370 2313     62842     vehicle_com          163
+    ## 1526422                  Solomon Islands 1970    NA   NA        NA pcthomedialysis           NA
+
+``` r
 coverage(timevar = "year", unitvar = "country_name",
           data = techdata,
           variable.names = c("upop", "xlrealgdp", "adoption_lvl"),

@@ -59,7 +59,7 @@ wdi.sample &lt;-<span class="st"> </span><span class="kw">WDI</span>(<span class
                                 <span class="st">&quot;literacy_women&quot;</span>,
                                 <span class="st">&quot;agriculture_gdp&quot;</span>,
                                 <span class="st">&quot;telephones&quot;</span>)</code></pre>
-<p>Suppose we next are interested in how well trade in services as a percentage of GDP predicts GDP per capita.</p>
+<p>Suppose we next are interested in how well &quot;trade in services as a percentage of GDP&quot; predicts &quot;GDP per capita&quot;.</p>
 <pre class="sourceCode r"><code class="sourceCode r">lm.fit &lt;-<span class="st"> </span><span class="kw">lm</span>(GDPPC ~<span class="st"> </span>services_gdp, <span class="dt">data =</span> wdi.sample)
 <span class="kw">summary</span>(lm.fit)</code></pre>
 <pre><code>## 
@@ -81,7 +81,7 @@ wdi.sample &lt;-<span class="st"> </span><span class="kw">WDI</span>(<span class
 ##   (57 observations deleted due to missingness)
 ## Multiple R-squared:  0.1044, Adjusted R-squared:  0.09857 
 ## F-statistic: 17.84 on 1 and 153 DF,  p-value: 4.112e-05</code></pre>
-<p>So we have a some data and statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tideous. Let's instead apply the coverage function:</p>
+<p>So we have some data and a statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tidious. Let's instead apply the coverage function:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(<span class="st">&quot;coverage&quot;</span>)
  <span class="kw">coverage</span>(<span class="dt">fit =</span> lm.fit, <span class="dt">timevar =</span> <span class="st">&quot;year&quot;</span>,
           <span class="dt">unitvar =</span> <span class="st">&quot;country&quot;</span>)
@@ -92,7 +92,7 @@ wdi.sample &lt;-<span class="st"> </span><span class="kw">WDI</span>(<span class
 ## 3        Mexico                 34                  34     1979-2012
 ## 4      Tanzania                 25                  25     1988-2012
 ## 2 United States                 43                  43     1970-2012</code></pre>
-<p>This is useful, but even more useful would be a visual representation:</p>
+<p>Let us also request a visual representation:</p>
 <pre class="sourceCode r"><code class="sourceCode r"> <span class="kw">library</span>(<span class="st">&quot;ggplot2&quot;</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)
  
  <span class="kw">coverage</span>(<span class="dt">fit =</span> lm.fit, <span class="dt">timevar =</span> <span class="st">&quot;year&quot;</span>,
@@ -104,7 +104,7 @@ wdi.sample &lt;-<span class="st"> </span><span class="kw">WDI</span>(<span class
           <span class="dt">unitvar =</span> <span class="st">&quot;country&quot;</span>, <span class="dt">output =</span> <span class="st">&quot;latex.table&quot;</span>)</code></pre>
 <pre><code>## 
 ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Thu, Dec 01, 2016 - 10:50:47 AM
+## % Date and time: Thu, Dec 01, 2016 - 10:55:58 AM
 ## \begin{table}[!htbp] \centering 
 ##   \caption{} 
 ##   \label{} 
@@ -140,7 +140,15 @@ wdi.sample &lt;-<span class="st"> </span><span class="kw">WDI</span>(<span class
 <p>Suppose next that we have data that may have multiple observations per time and unit combination. For instance, suppose that instead of looking at country-year data, we had country-year-technology data, where data might be missing for specific technologies within a country in a specific year or for covariates at the country-year level.</p>
 <pre class="sourceCode r"><code class="sourceCode r">techdata &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;3d_example.RDS&quot;</span>)
 
-<span class="kw">coverage</span>(<span class="dt">timevar =</span> <span class="st">&quot;year&quot;</span>, <span class="dt">unitvar =</span> <span class="st">&quot;country_name&quot;</span>,
+<span class="kw">head</span>(techdata)</code></pre>
+<pre><code>##                             country_name year  tpop upop xlrealgdp      technology adoption_lvl
+## 1526412                         Malaysia 1970 10390 1216     22684      pest_total           NA
+## 1526413 Lao People's Democratic Republic 1970  2962  156      2127     vehicle_car        11000
+## 1526417                  Solomon Islands 1970    NA   NA        NA steel_stainless           NA
+## 1526418                         Thailand 1970 36370 2313     62842     steel_other           NA
+## 1526419                         Thailand 1970 36370 2313     62842     vehicle_com          163
+## 1526422                  Solomon Islands 1970    NA   NA        NA pcthomedialysis           NA</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coverage</span>(<span class="dt">timevar =</span> <span class="st">&quot;year&quot;</span>, <span class="dt">unitvar =</span> <span class="st">&quot;country_name&quot;</span>,
           <span class="dt">data =</span> techdata,
           <span class="dt">variable.names =</span> <span class="kw">c</span>(<span class="st">&quot;upop&quot;</span>, <span class="st">&quot;xlrealgdp&quot;</span>, <span class="st">&quot;adoption_lvl&quot;</span>),
           <span class="dt">output =</span> <span class="st">&quot;visual&quot;</span>)</code></pre>

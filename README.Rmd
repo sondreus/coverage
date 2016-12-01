@@ -43,14 +43,14 @@ wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
                                 "telephones")
 ```
 
-Suppose we next are interested in how well trade in services as a percentage of GDP predicts GDP per capita.
+Suppose we next are interested in how well "trade in services as a percentage of GDP" predicts "GDP per capita".
 
 ```{r}
 lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
 summary(lm.fit)
 ```
 
-So we have a some data and statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tideous. Let's instead apply the coverage function:
+So we have some data and a statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tidious. Let's instead apply the coverage function:
 
 ```{r}
 library("coverage")
@@ -60,7 +60,7 @@ library("coverage")
  coverage.summary
 ```
 
-This is useful, but even more useful would be a visual representation:
+Let us also request a visual representation:
 ```{r}
  library("ggplot2", verbose = FALSE)
  
@@ -103,6 +103,8 @@ Suppose next that we have data that may have multiple observations per time and 
 ```{r}
 techdata <- readRDS("3d_example.RDS")
 
+head(techdata)
+ 
 coverage(timevar = "year", unitvar = "country_name",
           data = techdata,
           variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
