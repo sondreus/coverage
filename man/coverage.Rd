@@ -9,6 +9,8 @@ coverage(fit, timevar, unitvar, data, variable.names, output)
 \arguments{
 \item{fit}{A fitted object. Currently supports base R lm().}
 
+\item{timevar}{Your time variable}
+
 \item{unitvar}{Your unit variable}
 
 \item{data}{Data to be investigated. If none is supplied, defaults to data used in "\code{fit}" if fit is in supported format.}
@@ -16,60 +18,58 @@ coverage(fit, timevar, unitvar, data, variable.names, output)
 \item{variable.names}{Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}.}
 
 \item{output}{Desired output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.}
-
-\item{timewar}{Your time variable}
 }
 \description{
-This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.
+This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df") and a summary ("coverage.summary"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.
 }
 \examples{
 library(WDI)
-wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD', 
-                             'BG.GSR.NFSV.GD.ZS', 
-                             'SE.ADT.LITR.FE.ZS', 
-                             'NV.AGR.TOTL.ZS', 
-                             'IT.TEL.TOTL.P3'), 
-                             
-                             country=c('MX','CA',
-                             'US','TZ'), 
-                             
-                             start=1950, end=2012)
-                             
-colnames(wdi.sample)[4:8] <- c("GDPPC", 
-                               "services_gdp", 
-                               "literacy_women", 
-                               "agriculture_gdp", 
-                               "telephones")
-                               
-lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample) 
+wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
+                             'BG.GSR.NFSV.GD.ZS',
+                             'SE.ADT.LITR.FE.ZS',
+                             'NV.AGR.TOTL.ZS',
+                             'IT.TEL.TOTL.P3'),
 
-coverage(fit = lm.fit, timevar = "year", 
+                             country=c('MX','CA',
+                             'US','TZ'),
+
+                             start=1950, end=2012)
+
+colnames(wdi.sample)[4:8] <- c("GDPPC",
+                               "services_gdp",
+                               "literacy_women",
+                               "agriculture_gdp",
+                               "telephones")
+
+lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
+
+coverage(fit = lm.fit, timevar = "year",
          unitvar = "country")
 
 head(coverage.df)
 
 # For visuals, use:
-coverage(fit = lm.fit, timevar = "year", 
+coverage(fit = lm.fit, timevar = "year",
          unitvar = "country", output = "visual")
 
 # For latex tables, use:
-coverage(fit = lm.fit, timevar = "year", 
+coverage(fit = lm.fit, timevar = "year",
          unitvar = "country", output = "latex.table")
 
-# Supplying a fit is not required, and it may be easier 
-# to compare the consequences of different model specifications 
+# Supplying a fit is not required, and it may be easier
+# to compare the consequences of different model specifications
 # by simply providing the variable names:
-coverage(timevar = "year", unitvar = "country", 
-         data = wdi.sample, 
-         variable.names = c("GDPPC", 
-                            "agriculture_gdp"), 
+coverage(timevar = "year", unitvar = "country",
+         data = wdi.sample,
+         variable.names = c("GDPPC",
+                            "agriculture_gdp"),
          output = "visual")
 
-# vs:  
-coverage(timevar = "year", unitvar = "country", 
-         data = wdi.sample, 
-         variable.names = c("GDPPC", 
-         "services_gdp"), 
+# vs:
+coverage(timevar = "year", unitvar = "country",
+         data = wdi.sample,
+         variable.names = c("GDPPC",
+         "services_gdp"),
          output = "visual")
 
 
