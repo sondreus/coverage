@@ -1,0 +1,17 @@
+{
+    "contents" : "---\noutput: pdf_document\n---\n# coverage\n\nThe coverage package and associated function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage (\"coverage.df\"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and \"heatmap\" of observations in visual.\n\n## Example: \n\n* **fit** A fitted object. Currently supports base R **lm()**.\n* **timevar** Your time variable\n* **unitvar** Your unit variable\n* **data** Data to be investigated. If none is supplied, defaults to data used in \"**fit**\" if fit is in supported format.\n* **variable.names** Variables to be checked for coverage. If none is supplied, defaults to variables used in **fit**.\n* **output** Desired output: \"visual\" or \"latex.table\". Former depends on requires the package **ggplot2**, latter requires the package **stargazer**, both available on CRAN.\n\n   ```R\nlibrary(WDI)\nwdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',\n                              'BG.GSR.NFSV.GD.ZS',\n                              'SE.ADT.LITR.FE.ZS',\n                              'NV.AGR.TOTL.ZS',\n                              'IT.TEL.TOTL.P3'),\n\n                              country=c('MX','CA',\n                              'US','TZ'),\n\n                              start=1950, end=2012)\n\n colnames(wdi.sample)[4:8] <- c(\"GDPPC\",\n                                \"services_gdp\",\n                                \"literacy_women\",\n                                \"agriculture_gdp\",\n                                \"telephones\")\n\nlm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)\n\n coverage(fit = lm.fit, timevar = \"year\",\n          unitvar = \"country\")\n\n head(coverage.df)\n head(coverage.summary)\n\n # For visuals, use:\n coverage(fit = lm.fit, timevar = \"year\",\n          unitvar = \"country\", output = \"visual\")\n\n # For latex tables, use:\n coverage(fit = lm.fit, timevar = \"year\",\n          unitvar = \"country\", output = \"latex.table\")\n\n # Supplying a fit is not required, and it may be easier\n # to compare the consequences of different model specifications\n # by simply providing the variable names:\n coverage(timevar = \"year\", unitvar = \"country\",\n          data = wdi.sample,\n          variable.names = c(\"GDPPC\",\n                             \"agriculture_gdp\"),\n          output = \"visual\")\n\n # vs:\n coverage(timevar = \"year\", unitvar = \"country\",\n          data = wdi.sample,\n          variable.names = c(\"GDPPC\",\n          \"services_gdp\"),\n          output = \"visual\")\n\n   ```\n",
+    "created" : 1480553168694.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1181743847",
+    "id" : "F5D85C45",
+    "lastKnownWriteTime" : 1480553265,
+    "path" : "C:/Users/SondreUlvund/Dropbox/R-Package - Coverage/coverage/README.md",
+    "project_path" : "README.md",
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "type" : "markdown"
+}

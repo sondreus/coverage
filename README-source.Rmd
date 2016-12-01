@@ -1,0 +1,112 @@
+---
+title: "Coverage"
+author: "Sondre U. Solstad"
+output: html_document
+---
+# - an R package for seeing what you're missing
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 150)
+```
+
+The coverage package and associated function provides you with a summary of your time and unit coverage. This is important for any analysis conducted with row-wise deletion in the presence of missing data, especially if one suspect that patterns of missingness are non-random with respect to variables of interest. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default, the function provides a data frame of unit and time coverage ("coverage.df") and a summary of time coverage by unit ("coverage.summary"). It can also additionally supply a latex table or a visualization of coverage. Finally, the function also supports 3-dimensional data by providing total number of observations in tables, and a "heatmap" of observations in visual.
+
+## Arguments: 
+
+* **fit** A fitted object. Currently supports base R **lm()**.
+* **timevar** - Your time variable.
+* **unitvar** - Your unit variable.
+* **data** - Data to be investigated. If none is supplied, defaults to data used in "**fit**" if fit is in supported format.
+* **variable.names** - Variables to be checked for coverage. If none is supplied, defaults to variables used in **fit**.
+* **output** - Desired output: "visual" or "latex.table". Former depends on requires the package **ggplot2**, latter requires the package **stargazer**, both available on CRAN.
+
+## Example
+
+Let's illustrate the use of the package using an example. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
+```{r}
+library("WDI", quietly = TRUE)
+wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
+                              'BG.GSR.NFSV.GD.ZS',
+                              'SE.ADT.LITR.FE.ZS',
+                              'NV.AGR.TOTL.ZS',
+                              'IT.TEL.TOTL.P3'),
+
+                              country=c('MX','CA',
+                              'US','TZ'),
+
+                              start=1950, end=2012)
+
+ colnames(wdi.sample)[4:8] <- c("GDPPC",
+                                "services_gdp",
+                                "literacy_women",
+                                "agriculture_gdp",
+                                "telephones")
+```
+
+Suppose we next are interested in how well trade in services as a percentage of GDP predicts GDP per capita.
+
+```{r}
+lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
+summary(lm.fit)
+```
+
+So we have a some data and statistically significant relationship. But what kind data is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is stil very tideous. Let's instead apply the coverage function:
+
+```{r}
+library("coverage")
+ coverage(fit = lm.fit, timevar = "year",
+          unitvar = "country")
+
+ coverage.summary
+```
+
+This is useful, but even more useful would be a visual representation:
+```{r}
+ library("ggplot2", verbose = FALSE)
+ 
+ coverage(fit = lm.fit, timevar = "year",
+         unitvar = "country", output = "visual")
+```
+
+Or a latex table:
+```{r, message=F, warning=F}
+ library("stargazer", quietly = TRUE)
+ coverage(fit = lm.fit, timevar = "year",
+          unitvar = "country", output = "latex.table")
+```
+
+Supplying a fit is not required, and it may be easier to compare the coverage consequences of different model specifications by instead providing the variable names. This is supported in **coverage()** through the variable.names and data arguments.
+
+
+Let's use this functionality to visually explore our data:
+
+```{r}
+ coverage(timevar = "year", unitvar = "country",
+          data = wdi.sample,
+          variable.names = c("GDPPC",
+                             "agriculture_gdp"),
+          output = "visual")
+
+ # vs:
+ coverage(timevar = "year", unitvar = "country",
+          data = wdi.sample,
+          variable.names = c("GDPPC",
+          "services_gdp"),
+          output = "visual")
+
+```
+
+## 3-Dimensional Data 
+
+Suppose next that we have data that may have multiple observations per time and unit combination. For instance, suppose that instead of looking at country-year data, we had country-year-technology data, where data might be missing for specific technologies within a country in a specific year or for covariates at the country-year level.
+
+```{r}
+techdata <- readRDS("3d_example.RDS")
+
+coverage(timevar = "year", unitvar = "country_name",
+          data = techdata,
+          variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
+          output = "visual")
+
+coverage.summary
+```
