@@ -4,7 +4,7 @@
 \alias{coverage}
 \title{Coverage - Unit and Time}
 \usage{
-coverage(fit, timevar, unitvar, data, variable.names, output)
+coverage(fit, timevar, unitvar, data, variable.names, output, visual.source)
 }
 \arguments{
 \item{fit}{A fitted object. Currently supports base R lm().}
@@ -18,6 +18,8 @@ coverage(fit, timevar, unitvar, data, variable.names, output)
 \item{variable.names}{Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}.}
 
 \item{output}{Desired output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.}
+
+\item{visual.source}{If TRUE, prints ggplot2 code used to create visual.}
 }
 \description{
 This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df") and a summary ("coverage.summary"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.

@@ -7,6 +7,7 @@
 #' @param data Data to be investigated. If none is supplied, defaults to data used in "\code{fit}" if fit is in supported format.
 #' @param variable.names Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}.
 #' @param output Desired output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.
+#' @param visual.source If TRUE, prints ggplot2 code used to create visual.
 #' @keywords coverage lm
 #' @export
 #' @examples
@@ -61,7 +62,7 @@
 #'
 #'
 
-coverage <- function(fit, timevar, unitvar, data, variable.names, output){
+coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual.source){
 
   # Making sure the data supplied is a data frame, else assume same as fit data.
   if(missing("data") == TRUE){
@@ -164,6 +165,15 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output){
   # Reordering the rows (alphabetically)
   coverage.summary <<- unit.time.included[order(as.character(unit.time.included$Unit)),]
 
+  ## Printing code for visualization if requested:
+  if(missing(visual.source) == FALSE){
+    if(visual.source == TRUE){
+      print("library(ggplot2)")
+      print("base_size <- 9") 
+      print("p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'))")  
+    }
+  }
+  
   ## Outputting latex table if requested
   if(missing(output) == FALSE){
     if(output == "latex.table"){
@@ -194,7 +204,7 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output){
   if(missing(output) == FALSE){
     if(output == "visual"){
 
-      library(ggplot2)
+      suppressMessages(library(ggplot2, quietly = TRUE))
 
       base_size <- 9
       p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue") + theme_grey(base_size = base_size) + labs(x = "", y = "") + scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = "none", axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = "grey50"))

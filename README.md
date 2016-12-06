@@ -106,7 +106,7 @@ Or a latex table:
 
     ## 
     ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Thu, Dec 01, 2016 - 10:55:58 AM
+    ## % Date and time: Tue, Dec 06, 2016 - 8:57:40 AM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
