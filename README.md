@@ -110,7 +110,7 @@ Or a latex table:
 
     ## 
     ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Tue, Dec 06, 2016 - 3:10:55 PM
+    ## % Date and time: Tue, Dec 06, 2016 - 4:03:06 PM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
@@ -232,7 +232,7 @@ Let us return to our WDI data:
 
 ![](README_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
-Can we make this look nicer? To do so, we can ask coverage to give us the underlying code for the plot:
+We may have many reasons to customize this graphic. One way to do so is to ask coverage to give us the underlying code for the plot:
 
 ``` r
  coverage(fit = lm.fit, timevar = "year",
@@ -248,14 +248,15 @@ We can then manipulate this if we are not happy with the default settings:
 ``` r
 library(ggplot2)
 base_size <- 11 # Larger text size
+
 p <- ggplot(coverage.df, aes(Time, Unit))  
 p <- p + geom_tile(aes(fill = N), colour = 'white') 
-p <- p + scale_fill_gradient(low = 'grey', high = 'darkgreen') # Green instead of blue, grey instead of white tiles 
+p <- p + scale_fill_gradient(low = 'white', high = 'darkgreen') # Green instead of blue 
 p <- p + ggtitle(paste0("Regression Country-Year Coverage \n (N = ", sum(coverage.df$N), ")")) # Adding title
-p <- p + theme_bw(base_size = base_size) # theme_bw instead of theme_grey 
+p <- p + theme_grey(base_size = base_size) # theme_bw instead of theme_grey 
 p <- p + labs(x = '', y = '') # Removing axis labels 
-p <- p + scale_x_discrete(expand = c(0, 0), breaks = seq(min(as.numeric(as.character(coverage.df$Time))), max(as.numeric(as.character(coverage.df$Time))), by = 5)) + scale_y_discrete(expand = c(0, 0)) 
-p <- p + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 345, hjust = 0, colour = 'grey50')) # Removing legend, adjusting angle on x-axis tics 
+p <- p + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=25)) + scale_y_discrete(expand = c(0, 0)) # Changing number of x-axis tics
+p <- p + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 320, hjust = 0, colour = 'grey50'), plot.margin = unit(c(10, 15, 10, 5), "pt"), plot.title = element_text(color="grey50", size=12)) # Removing legend, adjusting angle on x-axis tics, increasing top and bottom margin (order of terms is top, right, bottom, left), changing title color and size.
 p
 ```
 
