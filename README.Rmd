@@ -13,6 +13,11 @@ library(coverage)
 
 The coverage package and associated function provides you with a summary of your time and unit coverage. This is important for any analysis conducted with row-wise deletion in the presence of missing data, especially if one suspect that patterns of missingness are non-random with respect to variables of interest. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default, the function provides a data frame of unit and time coverage ("coverage.df") and a summary of time coverage by unit ("coverage.summary"). It can also additionally supply a latex table or a visualization of coverage. Finally, the function also supports 3-dimensional data by providing total number of observations in tables, and a "heatmap" of observations in visual.
 
+Installation instructions:
+```{r, eval = FALSE}
+library(devtools)
+install_github("sondreus/coverage")
+```
 
 
 ```{r, echo=FALSE}
@@ -25,7 +30,7 @@ coverage(timevar = "year", unitvar = "country_name",
 
 ```
 
-- An example of row-wise coverage in technology-country-year data
+- *An example of row-wise coverage in technology-country-year data*
 
 ## Arguments: 
 
@@ -38,7 +43,7 @@ coverage(timevar = "year", unitvar = "country_name",
 
 ## Example
 
-Let's illustrate the use of the package using an example. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
+Let's see how this package works through an example. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
 ```{r}
 library("WDI", quietly = TRUE)
 wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
@@ -140,14 +145,14 @@ coverage(fit = lm.fit, timevar = "year",
 
 We may have many reasons to customize this graphic. One way to do so is to ask coverage to give us the underlying code for the plot:
 
-```{r} 
+```{r, tidy = TRUE, tidy.opts=list(width.cutoff=60)} 
  coverage(fit = lm.fit, timevar = "year",
          unitvar = "country", visual.source = TRUE)
 ```
 
 We can then manipulate this if we are not happy with the default settings:
 
-```{r}
+```{r, tidy = TRUE, tidy.opts=list(width.cutoff=60)}
 library(ggplot2)
 base_size <- 11 # Larger text size
 
@@ -158,7 +163,10 @@ p <- p + ggtitle(paste0("Regression Country-Year Coverage \n (N = ", sum(coverag
 p <- p + theme_grey(base_size = base_size) # theme_bw instead of theme_grey 
 p <- p + labs(x = '', y = '') # Removing axis labels 
 p <- p + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=25)) + scale_y_discrete(expand = c(0, 0)) # Changing number of x-axis tics
-p <- p + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 320, hjust = 0, colour = 'grey50'), plot.margin = unit(c(10, 15, 10, 5), "pt"), plot.title = element_text(color="grey50", size=12)) # Removing legend, adjusting angle on x-axis tics, increasing top and bottom margin (order of terms is top, right, bottom, left), changing title color and size.
+p <- p + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 320, hjust = 0, colour = 'grey50'), plot.margin = unit(c(10, 15, 10, 5), "pt"), plot.title = element_text(color="grey50", size=12)) 
+# Removing legend, adjusting angle on x-axis tics 
+# Increasing top and bottom margin (order of terms is top, right, bottom, left)
+# Changing title color and size.
 p
 
 ```
