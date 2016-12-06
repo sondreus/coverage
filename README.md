@@ -110,7 +110,7 @@ Or a latex table:
 
     ## 
     ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Tue, Dec 06, 2016 - 4:03:06 PM
+    ## % Date and time: Tue, Dec 06, 2016 - 4:09:25 PM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
@@ -226,7 +226,7 @@ Customization
 Let us return to our WDI data:
 
 ``` r
- coverage(fit = lm.fit, timevar = "year",
+coverage(fit = lm.fit, timevar = "year",
          unitvar = "country", output = "visual")
 ```
 
@@ -241,7 +241,7 @@ We may have many reasons to customize this graphic. One way to do so is to ask c
 
     ## [1] "library(ggplot2)"
     ## [1] "base_size <- 9"
-    ## [1] "p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'))"
+    ## [1] "p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'darkblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))"
 
 We can then manipulate this if we are not happy with the default settings:
 
