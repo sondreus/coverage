@@ -27,11 +27,13 @@ Arguments:
 -   **data** - Data to be investigated. If none is supplied, defaults to data used in "**fit**" if fit is in supported format.
 -   **variable.names** - Variables to be checked for coverage. If none is supplied, defaults to variables used in **fit**.
 -   **output** - Desired output: "visual" or "latex.table". Former depends on requires the package **ggplot2**, latter requires the package **stargazer**, both available on CRAN.
+-   **special.NA** - Variable that if missing will indicate "special" missingness if "visual" output is specified. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered.
+-   **visual.source** - If TRUE, prints ggplot2 code used to create visual.
 
 Example
 -------
 
-Let's see how this package works through an example. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
+Let's see how this package works through a simple application. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
 
 ``` r
 library("WDI", quietly = TRUE)
@@ -117,7 +119,7 @@ Or a latex table:
 
     ## 
     ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Tue, Dec 06, 2016 - 4:33:55 PM
+    ## % Date and time: Mon, Dec 12, 2016 - 3:56:14 PM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
@@ -168,18 +170,6 @@ Suppose next that we have data that may have multiple observations per time and 
 ``` r
 techdata <- readRDS("3d_example.RDS")
 
-head(techdata)
-```
-
-    ##                             country_name year  tpop upop xlrealgdp      technology adoption_lvl
-    ## 1526412                         Malaysia 1970 10390 1216     22684      pest_total           NA
-    ## 1526413 Lao People's Democratic Republic 1970  2962  156      2127     vehicle_car        11000
-    ## 1526417                  Solomon Islands 1970    NA   NA        NA steel_stainless           NA
-    ## 1526418                         Thailand 1970 36370 2313     62842     steel_other           NA
-    ## 1526419                         Thailand 1970 36370 2313     62842     vehicle_com          163
-    ## 1526422                  Solomon Islands 1970    NA   NA        NA pcthomedialysis           NA
-
-``` r
 coverage(timevar = "year", unitvar = "country_name",
           data = techdata,
           variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
@@ -192,40 +182,56 @@ coverage(timevar = "year", unitvar = "country_name",
 coverage.summary
 ```
 
-    ##                                Unit Total Observations Total time coverage                         Covered time 
-    ## 1                       Afghanistan                408                  29                             1970-1998
-    ## 2                           Algeria                919                  31                             1970-2000
-    ## 27                           Angola                418                  24                             1975-1998
-    ## 29                          Armenia                162                  10                             1991-2000
-    ## 30                       Azerbaijan                172                  10                             1991-2000
-    ## 3                             Benin                581                  31                             1970-2000
-    ## 4                            Canada               1282                  31                             1970-2000
-    ## 5                             China               1009                  31                             1970-2000
-    ## 6                        Costa Rica                585                  31                             1970-2000
-    ## 7                    Czechoslovakia                643                  23                             1970-1992
-    ## 8                Dominican Republic                484                  31                             1970-2000
-    ## 9                            France               1533                  31                             1970-2000
-    ## 31                          Georgia                171                  10                             1991-2000
-    ## 10                        Guatemala                585                  31                             1970-2000
-    ## 11                         Honduras                657                  31                             1970-2000
-    ## 12                        Indonesia                882                  31                             1970-2000
-    ## 13                            Kenya                660                  27 1970-1979, 1982, 1984-1985, 1987-2000
-    ## 14                           Kuwait                480                  26       1970-1979, 1981-1989, 1992-1998
-    ## 15 Lao People's Democratic Republic                348                  29                             1970-1998
-    ## 32                        Lithuania                216                  10                             1991-2000
-    ## 16                         Malaysia                852                  31                             1970-2000
-    ## 17                          Nigeria                769                  31                             1970-2000
-    ## 26                             Oman                419                  28                             1971-1998
-    ## 18                           Panama                663                  31                             1970-2000
-    ## 19                          Senegal                409                  20                  1970-1978, 1990-2000
-    ## 20                     South Africa                881                  31                             1970-2000
-    ## 21                        Swaziland                452                  31                             1970-2000
-    ## 33                       Tajikistan                169                  10                             1991-2000
-    ## 22     Tanzania, United Republic of                656                  31                             1970-2000
-    ## 23                         Thailand                931                  31                             1970-2000
-    ## 28                             Togo                516                  24                             1977-2000
-    ## 24                   United Kingdom               1279                  31                             1970-2000
-    ## 25                           Zambia                620                  31                             1970-2000
+    ##                                          Unit Total Observations Total time coverage        Covered time 
+    ## 26                                    Belarus                156                  10            1991-2000
+    ## 1             Bolivia, Plurinational State of                672                  31            1970-2000
+    ## 28                     Bosnia and Herzegovina                115                   7            1992-1998
+    ## 2                    Central African Republic                447                  29            1970-1998
+    ## 3                                        Cuba                765                  29            1970-1998
+    ## 4                                       Egypt                880                  31            1970-2000
+    ## 5                                     Finland               1493                  31            1970-2000
+    ## 6                                      France               1533                  31            1970-2000
+    ## 7                                       Gabon                472                  31            1970-2000
+    ## 27                                    Georgia                171                  10            1991-2000
+    ## 25                                    Germany                518                  11            1990-2000
+    ## 8                                      Greece               1179                  31            1970-2000
+    ## 9                   Iran, Islamic Republic of                888                  31            1970-2000
+    ## 10                                     Jordan                591                  31            1970-2000
+    ## 11           Lao People's Democratic Republic                348                  29            1970-1998
+    ## 12                                    Liberia                424                  29            1970-1998
+    ## 29 Macedonia, the former Yugoslav Republic of                152                   8            1993-2000
+    ## 13                                 Madagascar                694                  31            1970-2000
+    ## 24                                 Mozambique                455                  26            1975-2000
+    ## 14                                  Nicaragua                559                  31            1970-2000
+    ## 15                                     Panama                663                  31            1970-2000
+    ## 16                                     Rwanda                306                  24 1970-1991, 1999-2000
+    ## 17                                    Senegal                657                  31            1970-2000
+    ## 18                                  Sri Lanka                818                  31            1970-2000
+    ## 19                                     Sweden               1324                  31            1970-2000
+    ## 20                       Syrian Arab Republic                806                  31            1970-2000
+    ## 21                  Taiwan, Province of China                602                  29            1970-1998
+    ## 22                                    Uruguay                824                  31            1970-2000
+    ## 23                                   Zimbabwe                725                  31            1970-2000
+
+Special missingness
+-------------------
+
+Not all missingness is equal. Sometimes, data on a given time-unit combination is not available because the combination did not exist. For instance, research subjects in a medical trial may join a study at different times. We often want to distinguish this type of missingness ("subject had not yet joined the trail") from other types of missingness ("subject failed to measure blood-pressure during trail").
+
+**coverage()** provides a way to do so in its visual output through the "special.na" argument. Coverage interprets missingness of the variable specified in "special.na" to indicate that the time-unit combination does not exist, indicating this in the visual output by cells being light-grey.
+
+Looking at our technology data above, we can see that many apparently missing data points in fact are "special missing", belonging to countries that did not exist in the year in question. Suppose that we know our "government" variable has no missing data for independent countries but is missing for all other country-years. Then, we can use this as our "special.NA" variable.
+
+``` r
+coverage(timevar = "year", unitvar = "country_name",
+          data = techdata,
+          variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
+          output = "visual", special.NA = "government")
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+Note: If your data has time and unit values corresponding to *every and only* relevant time and unit combination, you can simply specify one of these as your "special.NA" variable. E.g. special.NA = "year".
 
 Customization
 -------------
@@ -237,7 +243,7 @@ coverage(fit = lm.fit, timevar = "year",
          unitvar = "country", output = "visual")
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 We may have many reasons to customize this graphic. One way to do so is to ask coverage to give us the underlying code for the plot:
 
@@ -248,7 +254,7 @@ coverage(fit = lm.fit, timevar = "year", unitvar = "country",
 
     ## [1] "library(ggplot2)"
     ## [1] "base_size <- 9"
-    ## [1] "p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))"
+    ## [1] "p <- ggplot(coverage.df, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))"
 
 We can then manipulate this if we are not happy with the default settings:
 
@@ -275,4 +281,4 @@ p <- p + theme(legend.position = "none", axis.text.x = element_text(size = base_
 p
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-13-1.png)
