@@ -6,9 +6,10 @@
 #' @param unitvar Your unit variable
 #' @param data Data to be investigated. If none is supplied, defaults to data used in "\code{fit}" if fit is in supported format.
 #' @param variable.names Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}.
-#' @param output Desired output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.
+#' @param output Desired extra output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.
+#' @param special.NA Variable that if missing will indicate "special" missingness if "visual" output is specified. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered.    
 #' @param visual.source If TRUE, prints ggplot2 code used to create visual.
-#' @keywords coverage lm
+#' @keywords coverage lm missingness missing
 #' @export
 #' @examples
 #' library(WDI)
@@ -62,7 +63,7 @@
 #'
 #'
 
-coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual.source){
+coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual.source, special.NA){
 
   # Making sure the data supplied is a data frame, else assume same as fit data.
   if(missing("data") == TRUE){
@@ -168,9 +169,19 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual
   ## Printing code for visualization if requested:
   if(missing(visual.source) == FALSE){
     if(visual.source == TRUE){
-      print("library(ggplot2)")
-      print("base_size <- 9") 
-      print("p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))")  
+
+      if(missing(special.NA) == FALSE){
+        
+        print("special.NA.df <- data[,c(unitvar, timevar, special.NA)]")
+        print("colnames(special.NA.df) <- c('Unit', 'Time', 'special.NA')")
+        print("coverage <- merge(coverage, special.NA.df, by=c('Unit', 'Time'), all.x = TRUE")
+        print("coverage.df$N <- ifelse(is.na(coverage.df$special.NA) == TRUE, NA, coverage.df$N)")  
+      
+        } else {  
+        print("library(ggplot2)")
+        print("base_size <- 9") 
+        print("p <- ggplot(coverage.df, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))") 
+        }
     }
   }
   
@@ -206,11 +217,25 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual
 
       suppressMessages(library(ggplot2, quietly = TRUE))
 
-      base_size <- 9
-      p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt")) 
+      if(missing(special.NA) == FALSE){
+          
+          special.NA.df <- data[,c(unitvar, timevar, special.NA)]
+          colnames(special.NA.df) <- c("Unit", "Time", "special.NA")
+          coverage <- merge(coverage, special.NA.df, by=c("Unit", "Time"), all.x = TRUE)
+          
+          coverage$N <- ifelse(is.na(coverage$special.NA) == TRUE, NA, coverage$N)  
+          base_size <- 9
+          p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = "lightgrey") + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt")) 
+        
+          return(p)
+            
+          } else {
+      
+          base_size <- 9
+          p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt")) 
       
       
-      return(p)
+          return(p) }
     }
   }
 }

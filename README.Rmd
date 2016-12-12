@@ -40,10 +40,12 @@ coverage(timevar = "year", unitvar = "country_name",
 * **data** - Data to be investigated. If none is supplied, defaults to data used in "**fit**" if fit is in supported format.
 * **variable.names** - Variables to be checked for coverage. If none is supplied, defaults to variables used in **fit**.
 * **output** - Desired output: "visual" or "latex.table". Former depends on requires the package **ggplot2**, latter requires the package **stargazer**, both available on CRAN.
+* **special.NA** - Variable that if missing will indicate "special" missingness if "visual" output is specified. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered.
+* **visual.source** - If TRUE, prints ggplot2 code used to create visual.
 
 ## Example
 
-Let's see how this package works through an example. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
+Let's see how this package works through a simple application. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
 ```{r}
 library("WDI", quietly = TRUE)
 wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
@@ -124,15 +126,33 @@ Suppose next that we have data that may have multiple observations per time and 
 ```{r}
 techdata <- readRDS("3d_example.RDS")
 
-head(techdata)
- 
 coverage(timevar = "year", unitvar = "country_name",
           data = techdata,
           variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
           output = "visual")
 
 coverage.summary
+
 ```
+
+## Special missingness
+
+Not all missingness is equal. Sometimes, data on a given time-unit combination is not available because the combination did not exist. For instance, research subjects in a medical trial may join a study at different times. We often want to distinguish this type of missingness ("subject had not yet joined the trail") from other types of missingness ("subject failed to measure blood-pressure during trail"). 
+
+**coverage()** provides a way to do so in its visual output through the "special.na" argument. Coverage interprets missingness of the variable specified in "special.na" to indicate that the time-unit combination does not exist, indicating this in the visual output by cells being light-grey. 
+
+Looking at our technology data above, we can  see that many apparently missing data points in fact are "special missing", belonging to countries that did not exist in the year in question. Suppose that we know our "government" variable has no missing data for independent countries but is missing for all other country-years. Then, we can use this as our "special.NA" variable.
+
+```{r}
+
+coverage(timevar = "year", unitvar = "country_name",
+          data = techdata,
+          variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
+          output = "visual", special.NA = "government")
+
+```
+
+Note: If your data has time and unit values corresponding to *every and only* relevant time and unit combination, you can simply specify one of these as your "special.NA" variable. E.g. special.NA = "year". 
 
 
 ## Customization
@@ -146,7 +166,7 @@ coverage(fit = lm.fit, timevar = "year",
 We may have many reasons to customize this graphic. One way to do so is to ask coverage to give us the underlying code for the plot:
 
 ```{r, tidy = TRUE, tidy.opts=list(width.cutoff=60)} 
- coverage(fit = lm.fit, timevar = "year",
+coverage(fit = lm.fit, timevar = "year",
          unitvar = "country", visual.source = TRUE)
 ```
 
