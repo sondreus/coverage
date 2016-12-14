@@ -119,7 +119,7 @@ Or a latex table:
 
     ## 
     ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Mon, Dec 12, 2016 - 3:56:14 PM
+    ## % Date and time: Wed, Dec 14, 2016 - 3:05:23 PM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
@@ -225,8 +225,7 @@ Looking at our technology data above, we can see that many apparently missing da
 ``` r
 coverage(timevar = "year", unitvar = "country_name",
           data = techdata,
-          variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
-          output = "visual", special.NA = "government")
+          variable.names = c("upop", "xlrealgdp", "adoption_lvl"), output = "visual", special.NA = "government")
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)
@@ -254,7 +253,7 @@ coverage(fit = lm.fit, timevar = "year", unitvar = "country",
 
     ## [1] "library(ggplot2)"
     ## [1] "base_size <- 9"
-    ## [1] "p <- ggplot(coverage.df, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))"
+    ## [1] "p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt')), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage.df[,1])))))"
 
 We can then manipulate this if we are not happy with the default settings:
 
@@ -262,22 +261,25 @@ We can then manipulate this if we are not happy with the default settings:
 library(ggplot2)
 base_size <- 11  # Larger text size
 
-p <- ggplot(coverage.df, aes(Time, Unit))
+p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, 
+    decreasing = TRUE)]))))
 p <- p + geom_tile(aes(fill = N), colour = "white")
 p <- p + scale_fill_gradient(low = "white", high = "darkgreen")  # Green instead of blue 
 p <- p + ggtitle(paste0("Regression Country-Year Coverage \n (N = ", 
     sum(coverage.df$N), ")"))  # Adding title
-p <- p + theme_grey(base_size = base_size)  # theme_bw instead of theme_grey 
+p <- p + theme_bw(base_size = base_size)  # theme_bw instead of theme_grey 
 p <- p + labs(x = "", y = "")  # Removing axis labels 
 p <- p + scale_x_discrete(expand = c(0, 0), breaks = pretty(as.numeric(as.character(coverage.df$Time)), 
     n = 25)) + scale_y_discrete(expand = c(0, 0))  # Changing number of x-axis tics
 p <- p + theme(legend.position = "none", axis.text.x = element_text(size = base_size * 
     0.8, angle = 320, hjust = 0, colour = "grey50"), plot.margin = unit(c(10, 
     15, 10, 5), "pt"), plot.title = element_text(color = "grey50", 
-    size = 12))
+    size = 12), axis.text.y = element_text(size = 30/(sqrt(length(unique(coverage.df[, 
+    1]))))))
 # Removing legend, adjusting angle on x-axis tics Increasing
 # top and bottom margin (order of terms is top, right,
-# bottom, left) Changing title color and size.
+# bottom, left), changing tuning parameter for y-axis labels
+# Changing title color and size.
 p
 ```
 

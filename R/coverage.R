@@ -94,7 +94,6 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual
   # Outputting a "coverage" data frame detailing the unit and time combinations present in the data (and their number, if data is 3-dimensional).
   coverage <- as.data.frame(table(observations.in.model[, unitvar], observations.in.model[, timevar]))
   colnames(coverage) <- c("Unit", "Time", "N")
-  coverage.df <<- coverage
 
   # Generating a data frame of all unique unit-time combinations represented among complete cases:
   coverage.list <- coverage[coverage$N != 0,]
@@ -166,21 +165,31 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual
   # Reordering the rows (alphabetically)
   coverage.summary <<- unit.time.included[order(as.character(unit.time.included$Unit)),]
 
+  # Adding "special.NA" column if special.NA specified
+  if(missing(special.NA) == FALSE){
+    special.NA.df <- unique(data[,c(unitvar, timevar, special.NA)])
+    colnames(special.NA.df) <- c("Unit", "Time", "special.NA")
+    coverage <- merge(coverage, special.NA.df, all.x = TRUE, by = c("Time", "Unit"))
+    coverage$special.NA <- ifelse(is.na(coverage$special.NA) == TRUE, TRUE, FALSE)
+  }
+  
+  # Writing to global environment
+  coverage.df <<- coverage
+  
   ## Printing code for visualization if requested:
   if(missing(visual.source) == FALSE){
     if(visual.source == TRUE){
 
       if(missing(special.NA) == FALSE){
         
-        print("special.NA.df <- data[,c(unitvar, timevar, special.NA)]")
-        print("colnames(special.NA.df) <- c('Unit', 'Time', 'special.NA')")
-        print("coverage <- merge(coverage, special.NA.df, by=c('Unit', 'Time'), all.x = TRUE")
-        print("coverage.df$N <- ifelse(is.na(coverage.df$special.NA) == TRUE, NA, coverage.df$N)")  
-      
+        print("coverage.df$N <- ifelse(coverage.df$special.NA == TRUE, NA, coverage.df$N)")  
+        print("base_size <- 9") 
+        print("p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt')), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage.df[,1])))))") 
+        
         } else {  
         print("library(ggplot2)")
         print("base_size <- 9") 
-        print("p <- ggplot(coverage.df, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt'))") 
+        print("p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt')), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage.df[,1])))))") 
         }
     }
   }
@@ -219,20 +228,16 @@ coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual
 
       if(missing(special.NA) == FALSE){
           
-          special.NA.df <- data[,c(unitvar, timevar, special.NA)]
-          colnames(special.NA.df) <- c("Unit", "Time", "special.NA")
-          coverage <- merge(coverage, special.NA.df, by=c("Unit", "Time"), all.x = TRUE)
-          
-          coverage$N <- ifelse(is.na(coverage$special.NA) == TRUE, NA, coverage$N)  
+          coverage$N <- ifelse(coverage$special.NA == TRUE, NA, coverage$N)  
           base_size <- 9
-          p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = "lightgrey") + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt")) 
+          p <- ggplot(coverage, aes(Time, factor(coverage$Unit, levels = unique(coverage$Unit[sort(coverage$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = "lightgrey") + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt"), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage[,1])))))) 
         
           return(p)
             
           } else {
       
           base_size <- 9
-          p <- ggplot(coverage, aes(Time, Unit)) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt")) 
+          p <- ggplot(coverage, aes(Time, factor(coverage$Unit, levels = unique(coverage$Unit[sort(coverage$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt"), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage[,1])))))) 
       
       
           return(p) }
