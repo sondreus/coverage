@@ -14,6 +14,8 @@ library(devtools)
 install_github("sondreus/coverage")
 ```
 
+    ## Warning: package 'ggplot2' was built under R version 3.4.4
+
 ![](README_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
 -   *An example of row-wise coverage in technology-country-year data*
@@ -37,6 +39,11 @@ Let's see how this package works through a simple application. We begin by getti
 
 ``` r
 library("WDI", quietly = TRUE)
+```
+
+    ## Warning: package 'WDI' was built under R version 3.4.4
+
+``` r
 wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
                               'BG.GSR.NFSV.GD.ZS',
                               'SE.ADT.LITR.FE.ZS',
@@ -68,19 +75,19 @@ summary(lm.fit)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -23454.6 -16054.0   -688.3  12475.8  29269.1 
+    ## -23494.9 -15947.5   -641.8  12465.0  29161.0 
     ## 
     ## Coefficients:
     ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)   33306.9     2595.1  12.834  < 2e-16 ***
-    ## services_gdp  -1256.0      297.4  -4.224 4.11e-05 ***
+    ## (Intercept)   33199.0     2576.9  12.883  < 2e-16 ***
+    ## services_gdp  -1236.2      295.9  -4.177 4.94e-05 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 15850 on 153 degrees of freedom
+    ## Residual standard error: 15810 on 153 degrees of freedom
     ##   (57 observations deleted due to missingness)
-    ## Multiple R-squared:  0.1044, Adjusted R-squared:  0.09857 
-    ## F-statistic: 17.84 on 1 and 153 DF,  p-value: 4.112e-05
+    ## Multiple R-squared:  0.1024, Adjusted R-squared:  0.09651 
+    ## F-statistic: 17.45 on 1 and 153 DF,  p-value: 4.939e-05
 
 So we have some data and a statistically significant relationship. But which country-years is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is still very tidious. Let's instead apply the coverage function:
 
@@ -118,8 +125,8 @@ Or a latex table:
 ```
 
     ## 
-    ## % Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-    ## % Date and time: Wed, Dec 14, 2016 - 3:05:23 PM
+    ## % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+    ## % Date and time: Mon, Mar 25, 2019 - 8:22:14 PM
     ## \begin{table}[!htbp] \centering 
     ##   \caption{} 
     ##   \label{} 
@@ -247,8 +254,8 @@ coverage(fit = lm.fit, timevar = "year",
 We may have many reasons to customize this graphic. One way to do so is to ask coverage to give us the underlying code for the plot:
 
 ``` r
-coverage(fit = lm.fit, timevar = "year", unitvar = "country", 
-    visual.source = TRUE)
+coverage(fit = lm.fit, timevar = "year",
+         unitvar = "country", visual.source = TRUE)
 ```
 
     ## [1] "library(ggplot2)"
@@ -259,28 +266,25 @@ We can then manipulate this if we are not happy with the default settings:
 
 ``` r
 library(ggplot2)
-base_size <- 11  # Larger text size
+base_size <- 11 # Larger text size
 
-p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, 
-    decreasing = TRUE)]))))
-p <- p + geom_tile(aes(fill = N), colour = "white")
-p <- p + scale_fill_gradient(low = "white", high = "darkgreen")  # Green instead of blue 
-p <- p + ggtitle(paste0("Regression Country-Year Coverage \n (N = ", 
-    sum(coverage.df$N), ")"))  # Adding title
-p <- p + theme_bw(base_size = base_size)  # theme_bw instead of theme_grey 
-p <- p + labs(x = "", y = "")  # Removing axis labels 
-p <- p + scale_x_discrete(expand = c(0, 0), breaks = pretty(as.numeric(as.character(coverage.df$Time)), 
-    n = 25)) + scale_y_discrete(expand = c(0, 0))  # Changing number of x-axis tics
-p <- p + theme(legend.position = "none", axis.text.x = element_text(size = base_size * 
-    0.8, angle = 320, hjust = 0, colour = "grey50"), plot.margin = unit(c(10, 
-    15, 10, 5), "pt"), plot.title = element_text(color = "grey50", 
-    size = 12), axis.text.y = element_text(size = 30/(sqrt(length(unique(coverage.df[, 
-    1]))))))
-# Removing legend, adjusting angle on x-axis tics Increasing
-# top and bottom margin (order of terms is top, right,
-# bottom, left), changing tuning parameter for y-axis labels
+p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)]))))  
+p <- p + geom_tile(aes(fill = N), colour = 'white') 
+p <- p + scale_fill_gradient(low = 'white', high = 'darkgreen') # Green instead of blue 
+p <- p + ggtitle(paste0("Regression Country-Year Coverage \n (N = ", sum(coverage.df$N), ")")) # Adding title
+p <- p + theme_bw(base_size = base_size) # theme_bw instead of theme_grey 
+p <- p + labs(x = '', y = '') # Removing axis labels 
+p <- p + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=25)) + scale_y_discrete(expand = c(0, 0)) # Changing number of x-axis tics
+p <- p + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 320, hjust = 0, colour = 'grey50'), plot.margin = unit(c(10, 15, 10, 5), "pt"), plot.title = element_text(color="grey50", size=12), axis.text.y = element_text(size = 30/(sqrt(length(unique(coverage.df[,1])))))) 
+# Removing legend, adjusting angle on x-axis tics 
+# Increasing top and bottom margin (order of terms is top, right, bottom, left), changing tuning parameter for y-axis labels
 # Changing title color and size.
 p
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-13-1.png)
+
+Citation:
+---------
+
+Solstad, Sondre Ulvund (2018). *Coverage: Visualize Panel Data Coverage*. <https://github.com/sondreus/coverage#coverage>

@@ -190,6 +190,7 @@ p
 
 ```
 
-
+## Citation:
+Solstad, Sondre Ulvund (2018). *Coverage: Visualize Panel Data Coverage*. https://github.com/sondreus/coverage#coverage 
 
 
