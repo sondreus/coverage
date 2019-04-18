@@ -209,7 +209,9 @@ if(output == "data.frame"){
 
 ## Return latex table if requested
 if(output == "latex.table"){
-library(stargazer)
+
+  library(stargazer)
+
   # Changing column names to be more descriptive
   colnames(unit_coverage_df) <- c("Unit", "Covered time", "Total Observations")
 
