@@ -90,15 +90,13 @@ Supplying a fit is not required, and it may be easier to compare the coverage co
 Let's use this functionality to visually explore our data:
 
 ```{r}
- coverage(timevar = "year", unitvar = "country",
-          data = wdi.sample,
+ coverage(data = wdi.sample,
           variable.names = c("GDPPC",
                              "agriculture_gdp"),
           output = "visual")
 
  # vs:
- coverage(timevar = "year", unitvar = "country",
-          data = wdi.sample,
+ coverage(data = wdi.sample,
           variable.names = c("GDPPC",
           "services_gdp"),
           output = "visual")
