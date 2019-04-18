@@ -28,7 +28,7 @@ coverage(fit, timevar = "year", unitvar = "country", data,
 \item{...}{Additional arguments passed to ggplot2's \code{theme} function, or \code{stargazer}, depending on output selected. (Optional)}
 }
 \description{
-This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df") and a summary ("coverage.summary"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.
+The coverage package and associated function provides you with a visual, data frame or latex table summary of your time and unit coverage.
 }
 \examples{
 library(WDI)
@@ -59,6 +59,7 @@ coverage(fit = lm.fit, output = "data.frame")
 
 # For latex table, use:
 coverage(fit = lm.fit, output = "latex.table")
+
 
 }
 \keyword{NA}

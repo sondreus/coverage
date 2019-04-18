@@ -1,6 +1,6 @@
 #' Coverage - Unit and Time
 #'
-#' This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df") and a summary ("coverage.summary"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.
+#' The coverage package and associated function provides you with a visual, data frame or latex table summary of your time and unit coverage.
 #' @param fit A fitted object.
 #' @param timevar Time variable. Defaults to "year".
 #' @param unitvar Unit variable. Defaults to "country".
@@ -86,6 +86,9 @@ if(!missing(special.NA)){
   variable.names <- unique(c(variable.names, special.NA))
 }
 
+# Add timevar and unitvar to list of variables:
+variable.names <- unique(c(variable.names, unitvar, timevar))
+
 #  If not specified, get data to consider from fitted object:
 if(missing(data)){
 
@@ -110,7 +113,7 @@ if(missing(data)){
 }
 
 # Subsetting data frame:
-data <- data[order(data[, timevar]), unique(c(timevar, unitvar, variable.names))]
+data <- data[order(data[, timevar]), variable.names]
 
 # Assessing missingness:
 data$missing <- !complete.cases(data)

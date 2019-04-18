@@ -11,7 +11,11 @@ options(width = 150)
 library(coverage)
 ```
 
-The coverage package and associated function provides you with a summary of your time and unit coverage. This is important for any analysis conducted with row-wise deletion in the presence of missing data, especially if one suspect that patterns of missingness are non-random with respect to variables of interest. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default, the function provides a data frame of unit and time coverage ("coverage.df") and a summary of time coverage by unit ("coverage.summary"). It can also additionally supply a latex table or a visualization of coverage. Finally, the function also supports 3-dimensional data by providing total number of observations in tables, and a "heatmap" of observations in visual.
+The coverage package and associated function provides you with a visual, data frame or latex table summary of your time and unit coverage. 
+
+This is important for any analysis conducted with row-wise deletion in the presence of missing data, especially if one suspect that patterns of missingness are non-random with respect to variables of interest. 
+
+The function supports N-dimensional data by allowing for and summarizing multiple observations per time-unit combination.
 
 Installation instructions:
 ```{r, eval = FALSE}
@@ -30,76 +34,58 @@ coverage(timevar = "year", unitvar = "country_name",
 
 ```
 
-- *An example of row-wise coverage in technology-country-year data*
+- *An example of analysis coverage for technology-country-year data*
 
 ## Arguments: 
 
-* **fit** A fitted object. Currently supports base R **lm()**.
-* **timevar** - Your time variable.
-* **unitvar** - Your unit variable.
-* **data** - Data to be investigated. If none is supplied, defaults to data used in "**fit**" if fit is in supported format.
-* **variable.names** - Variables to be checked for coverage. If none is supplied, defaults to variables used in **fit**.
-* **output** - Desired output: "visual" or "latex.table". Former depends on requires the package **ggplot2**, latter requires the package **stargazer**, both available on CRAN.
-* **special.NA** - Variable that if missing will indicate "special" missingness if "visual" output is specified. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered.
-* **visual.source** - If TRUE, prints ggplot2 code used to create visual.
-
+* **fit** A fitted object.
+* **timevar** Time variable. Defaults to "year".
+* **unitvar** Unit variable. Defaults to "country".
+* **data** Data to be investigated. If none is supplied, attempts to use same data as "\code{fit}", first by considering its model matrix, and - if variables are missing (such as timevar and unitvar) - by looking for the source data in the global environment. (Optional)
+* **variable.names** Variables to be checked for coverage. If none is supplied, defaults to variables used in *fit*, or if fit not provided, all variables in data. (Optional)
+* **output** Desired extra output: "visual" (default), "data.frame", or "latex.table". First depends on *ggplot2*, last *stargazer*, both available on CRAN.
+* **special.NA** Variable that if missing will indicate "special" missingness. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered. (Optional)
+* **data.frequency** Integer specifying the increments between observations. Defaults to 1.
+* **...** Additional arguments passed to ggplot2's theme function, or stargazer, depending on output selected. (Optional)
 ## Example
 
 Let's see how this package works through a simple application. We begin by getting some data from the World Bank Development Indicators, using the WDI package (by Vincent Arel-Bundock). Let's get data on GDP per capita, trade in services as a percentage of GDP, adult female literacy rates, agriculture as a percentage of GDP, and finally, number of telephone subscriptions per 1000 people.
 ```{r}
 library("WDI", quietly = TRUE)
-wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
-                              'BG.GSR.NFSV.GD.ZS',
-                              'SE.ADT.LITR.FE.ZS',
-                              'NV.AGR.TOTL.ZS',
-                              'IT.TEL.TOTL.P3'),
+wdi.sample <- WDI(indicator=c("GDPPC" = "NY.GDP.PCAP.KD",
+                              "services_gdp" = "BG.GSR.NFSV.GD.ZS",
+                              "agriculture_gdp" = "NV.AGR.TOTL.ZS",
+                              "telephones" = "IT.TEL.TOTL.P3"),
+                              start=1970, end=2012,
+                              country="all")
 
-                              country=c('MX','CA',
-                              'US','TZ'),
-
-                              start=1950, end=2012)
-
- colnames(wdi.sample)[4:8] <- c("GDPPC",
-                                "services_gdp",
-                                "literacy_women",
-                                "agriculture_gdp",
-                                "telephones")
+lm.fit <- lm(GDPPC ~ ., data = wdi.sample)
 ```
 
 Suppose we next are interested in how well "trade in services as a percentage of GDP" predicts "GDP per capita".
 
 ```{r}
-lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
-summary(lm.fit)
+lm.fit <- lm(GDPPC ~ services_gdp + agriculture_gdp + telephones, data = wdi.sample)
 ```
 
 So we have some data and a statistically significant relationship. But which country-years is this relationship based on? One option would be to inspect the data manually, which is viable only if the number of units (countries) and time points (years) are both small. And even in such a case, it is still very tidious. Let's instead apply the coverage function:
 
 ```{r}
 library("coverage")
- coverage(fit = lm.fit, timevar = "year",
-          unitvar = "country")
-
- coverage.summary
+ coverage(lm.fit)
 ```
 
-Let us also request a visual representation:
+Let us also request a data frame summary:
 ```{r}
- library("ggplot2", verbose = FALSE)
- 
- coverage(fit = lm.fit, timevar = "year",
-         unitvar = "country", output = "visual")
+ coverage(fit = lm.fit, output = "data.frame")[1:10, ]
 ```
 
 Or a latex table:
 ```{r, message=F, warning=F}
- library("stargazer", quietly = TRUE)
- coverage(fit = lm.fit, timevar = "year",
-          unitvar = "country", output = "latex.table")
+l.tab <- coverage(fit = lm.fit, output = "latex.table")
 ```
 
 Supplying a fit is not required, and it may be easier to compare the coverage consequences of different model specifications by instead providing the variable names. This is supported in **coverage()** through the variable.names and data arguments.
-
 
 Let's use this functionality to visually explore our data:
 
@@ -128,10 +114,7 @@ techdata <- readRDS("3d_example.RDS")
 
 coverage(timevar = "year", unitvar = "country_name",
           data = techdata,
-          variable.names = c("upop", "xlrealgdp", "adoption_lvl"),
-          output = "visual")
-
-coverage.summary
+          variable.names = c("upop", "xlrealgdp", "adoption_lvl"))
 
 ```
 
@@ -139,9 +122,9 @@ coverage.summary
 
 Not all missingness is equal. Sometimes, data on a given time-unit combination is not available because the combination did not exist. For instance, research subjects in a medical trial may join a study at different times. We often want to distinguish this type of missingness ("subject had not yet joined the trail") from other types of missingness ("subject failed to measure blood-pressure during trail"). 
 
-**coverage()** provides a way to do so in its visual output through the "special.na" argument. Coverage interprets missingness of the variable specified in "special.na" to indicate that the time-unit combination does not exist, indicating this in the visual output by cells being light-grey. 
+**coverage()** provides a way to do so in its visual output through the "special.NA" argument. Coverage interprets missingness of the variable specified in "special.NA" to indicate that the time-unit combination does not exist, indicating this in the visual output by cells being light-grey. 
 
-Looking at our technology data above, we can  see that many apparently missing data points in fact are "special missing", belonging to countries that did not exist in the year in question. Suppose that we know our "government" variable has no missing data for independent countries but is missing for all other country-years. Then, we can use this as our "special.NA" variable.
+Looking at our technology data, we can see that many apparently missing data points in fact are "special missing", belonging to countries that did not exist in the year in question. Suppose that we know our "government" variable has no missing data for independent countries but is missing for all other country-years. Then, we can use this as our "special.NA" variable.
 
 ```{r}
 
@@ -152,43 +135,6 @@ coverage(timevar = "year", unitvar = "country_name",
 ```
 
 Note: If your data has time and unit values corresponding to *every and only* relevant time and unit combination, you can simply specify one of these as your "special.NA" variable. E.g. special.NA = "year". 
-
-
-## Customization
-
-Let us return to our WDI data:
-```{r} 
-coverage(fit = lm.fit, timevar = "year",
-         unitvar = "country", output = "visual")
-```
-
-We may have many reasons to customize this graphic. One way to do so is to ask coverage to give us the underlying code for the plot:
-
-```{r, tidy = TRUE, tidy.opts=list(width.cutoff=60), out.width='\\textwidth'} 
-coverage(fit = lm.fit, timevar = "year",
-         unitvar = "country", visual.source = TRUE)
-```
-
-We can then manipulate this if we are not happy with the default settings:
-
-```{r, tidy = TRUE, tidy.opts=list(width.cutoff=60)}
-library(ggplot2)
-base_size <- 11 # Larger text size
-
-p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)]))))  
-p <- p + geom_tile(aes(fill = N), colour = 'white') 
-p <- p + scale_fill_gradient(low = 'white', high = 'darkgreen') # Green instead of blue 
-p <- p + ggtitle(paste0("Regression Country-Year Coverage \n (N = ", sum(coverage.df$N), ")")) # Adding title
-p <- p + theme_bw(base_size = base_size) # theme_bw instead of theme_grey 
-p <- p + labs(x = '', y = '') # Removing axis labels 
-p <- p + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=25)) + scale_y_discrete(expand = c(0, 0)) # Changing number of x-axis tics
-p <- p + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 320, hjust = 0, colour = 'grey50'), plot.margin = unit(c(10, 15, 10, 5), "pt"), plot.title = element_text(color="grey50", size=12), axis.text.y = element_text(size = 30/(sqrt(length(unique(coverage.df[,1])))))) 
-# Removing legend, adjusting angle on x-axis tics 
-# Increasing top and bottom margin (order of terms is top, right, bottom, left), changing tuning parameter for y-axis labels
-# Changing title color and size.
-p
-
-```
 
 ## Citation:
 Solstad, Sondre Ulvund (2018). *Coverage: Visualize Panel Data Coverage*. https://github.com/sondreus/coverage#coverage 
