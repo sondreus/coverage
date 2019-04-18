@@ -1,246 +1,234 @@
 #' Coverage - Unit and Time
 #'
 #' This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df") and a summary ("coverage.summary"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.
-#' @param fit A fitted object. Currently supports base R lm().
-#' @param timevar Your time variable
-#' @param unitvar Your unit variable
-#' @param data Data to be investigated. If none is supplied, defaults to data used in "\code{fit}" if fit is in supported format.
-#' @param variable.names Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}.
-#' @param output Desired extra output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.
-#' @param special.NA Variable that if missing will indicate "special" missingness if "visual" output is specified. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered.    
-#' @param visual.source If TRUE, prints ggplot2 code used to create visual.
-#' @keywords coverage lm missingness missing
+#' @param fit A fitted object.
+#' @param timevar Time variable. Defaults to "year".
+#' @param unitvar Unit variable. Defaults to "country".
+#' @param data Data to be investigated. If none is supplied, attempts to use same data as "\code{fit}", first by considering its model matrix, and - if variables are missing (such as timevar and unitvar) - by looking for the source data in the global environment. (Optional)
+#' @param variable.names Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}, or if fit not provided, all variables in data. (Optional)
+#' @param output Desired extra output: "visual" (default), "data.frame", or "latex.table". First depends on \code{ggplot2}, last \code{stargazer}, both available on CRAN.
+#' @param special.NA Variable that if missing will indicate "special" missingness. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered. (Optional)
+#' @param data.frequency Integer specifying the increments between observations. Defaults to 1.
+#' @param ... Additional arguments passed to ggplot2's \code{theme} function, or \code{stargazer}, depending on output selected. (Optional)
+#' @keywords coverage lm missingness missing NA
 #' @export
 #' @examples
 #' library(WDI)
-#' wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
-#'                              'BG.GSR.NFSV.GD.ZS',
-#'                              'SE.ADT.LITR.FE.ZS',
-#'                              'NV.AGR.TOTL.ZS',
-#'                              'IT.TEL.TOTL.P3'),
+#' wdi.sample <- WDI(indicator=c("GDPPC" = "NY.GDP.PCAP.KD",
+#'                              "services_gdp" = "BG.GSR.NFSV.GD.ZS",
+#'                              "agriculture_gdp" = "NV.AGR.TOTL.ZS",
+#'                              "telephones" = "IT.TEL.TOTL.P3"),
+#'                              start=1970, end=2012,
+#'                              country="all")
 #'
-#'                              country=c('MX','CA',
-#'                              'US','TZ'),
+#' lm.fit <- lm(GDPPC ~ ., data = wdi.sample)
 #'
-#'                              start=1950, end=2012)
+#' coverage(lm.fit)
 #'
-#' colnames(wdi.sample)[4:8] <- c("GDPPC",
-#'                                "services_gdp",
-#'                                "literacy_women",
-#'                                "agriculture_gdp",
-#'                                "telephones")
-#'
-#' lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
-#'
-#' coverage(fit = lm.fit, timevar = "year",
-#'          unitvar = "country")
-#'
-#' head(coverage.df)
-#'
-#' # For visuals, use:
-#' coverage(fit = lm.fit, timevar = "year",
-#'          unitvar = "country", output = "visual")
-#'
-#' # For latex tables, use:
-#' coverage(fit = lm.fit, timevar = "year",
-#'          unitvar = "country", output = "latex.table")
-#'
-#' # Supplying a fit is not required, and it may be easier
-#' # to compare the consequences of different model specifications
-#' # by simply providing the variable names:
-#' coverage(timevar = "year", unitvar = "country",
-#'          data = wdi.sample,
+#' # One may also specify variables explicitly:
+#' coverage(timevar = "year",
+#'          unitvar = "country",
 #'          variable.names = c("GDPPC",
-#'                             "agriculture_gdp"),
-#'          output = "visual")
+#'                   "services_gdp",
+#'                   "agriculture_gdp",
+#'                   "telephones"),
+#'          data = wdi.sample)
 #'
-#' # vs:
-#' coverage(timevar = "year", unitvar = "country",
-#'          data = wdi.sample,
-#'          variable.names = c("GDPPC",
-#'          "services_gdp"),
-#'          output = "visual")
+#' # Or request data.frame or latex.table output:
+#'
+#' # For data.frame, use:
+#' coverage(fit = lm.fit, output = "data.frame")
+#'
+#' # For latex table, use:
+#' coverage(fit = lm.fit, output = "latex.table")
 #'
 #'
 
-coverage <- function(fit, timevar, unitvar, data, variable.names, output, visual.source, special.NA){
 
-  # Making sure the data supplied is a data frame, else assume same as fit data.
-  if(missing("data") == TRUE){
-    data <- as.data.frame(eval(fit$call[[3]], envir= .GlobalEnv))
+coverage <- function(fit,
+                     timevar = "year",
+                     unitvar = "country",
+                     data,
+                     variable.names,
+                     special.NA,
+                     output = c("visual", "data.frame", "latex.table")[1],
+                     data.frequency = 1,
+                     ...){
+
+# Check that permissible output specified:
+  if(!output %in% c("visual", "data.frame", "latex.table")){
+    stop("Please select an appropriate output. Alternatives are: 'visual', 'data.frame', and 'latex.table'")
+  }
+
+# Check if data or fit provided
+if(missing(data)){
+  if(missing(fit)){
+    stop("Coverage requires you to supply either data or a fitted object.")
+  }
+
+}
+
+# If not specified, get variables to consider
+if(missing(variable.names)){
+
+  # from fitted object:
+  if(!missing(fit)){
+  variable.names <- all.vars(formula(fit))
+
   } else {
-    data <- as.data.frame(data)
+  # or just use all variables in data
+  variable.names <- colnames(data)
+
   }
+}
 
-  ### Acquiring the names of variables used in model
+if(!missing(special.NA)){
+  variable.names <- unique(c(variable.names, special.NA))
+}
 
-  # Checking if supplied variable names manually
-  if(missing("variable.names") == TRUE) {
+#  If not specified, get data to consider from fitted object:
+if(missing(data)){
 
-    # If not, using variable names from fit
-    var.names <- as.vector(all.vars(formula(fit)))
-  } else {
-
-    # If did, using manually supplied variable names
-    var.names <- variable.names
-  }
-
-  # Generating a new data set with the relevant variables
-  coverage.frame <- data[, c(var.names, timevar, unitvar)]
-
-  # Generating an alternative data set with complete cases only
-  observations.in.model <- coverage.frame[complete.cases(coverage.frame[, c(var.names)]),]
-
-  # Outputting a "coverage" data frame detailing the unit and time combinations present in the data (and their number, if data is 3-dimensional).
-  coverage <- as.data.frame(table(observations.in.model[, unitvar], observations.in.model[, timevar]))
-  colnames(coverage) <- c("Unit", "Time", "N")
-
-  # Generating a data frame of all unique unit-time combinations represented among complete cases:
-  coverage.list <- coverage[coverage$N != 0,]
-  coverage.list[, 1] <- as.character(coverage.list[, 1])
-  coverage.list[, 2] <- as.character(coverage.list[, 2])
-  coverage.list[, 3] <- as.numeric(coverage.list[, 3])
-
-  coverage.unit.time <- cbind.data.frame(rep(NA, length(unique(coverage.list$Unit))), rep(NA, length(unique(coverage.list$Unit))))
-  colnames(coverage.unit.time) <- c("Unit", "Time")
-
-  for (i in 1:length(unique(coverage.list$Unit))){
-    coverage.unit.time[i, 1] <- as.character(unique(coverage.list$Unit)[i])
-    coverage.unit.time[i, 2] <- paste(unique(coverage.list$Time[coverage.list$Unit == unique(coverage.list$Unit)[i]]), collapse=", ")
-  }
-
-  ## Generting a compact list of unit-time coverage by converting the separate times into intervals:
-  intervals <- cbind.data.frame(rep(unique(coverage.list$Unit), 200), rep(NA, 200))
-  colnames(intervals) <- c("Unit", "intervals")
-
-  intervals <- intervals[order(intervals$Unit),]
-  unit.time.included <- cbind.data.frame(unique(coverage.list$Unit), rep(NA, length(unique(coverage.list$Unit))))
-  colnames(unit.time.included) <- c("Unit", "coverage")
-
-  for (j in unique(coverage.unit.time$Unit)){
-    index <- 1
-    beginning_time <- "not this time"
-
-    for (i in (min(as.numeric(as.character(coverage$Time)))-1):(max(as.numeric(as.character(coverage$Time))))+1){
-
-      current_time <- i
-      if(beginning_time == "not this time"){
-
-        beginning_time <- ifelse(length(grep(i, coverage.unit.time$Time[coverage.unit.time$Unit == j]))>0, current_time, "not this time")
-      } else {
-
-        if(length(grep(i, coverage.unit.time$Time[coverage.unit.time$Unit == j]))>0){
-          current_interval <- paste(beginning_time, current_time, sep="-")
-        } else {
-
-          if(beginning_time == i - 1 & length(grep(i-1, coverage.unit.time$Time[coverage.unit.time$Unit == j]))>0){
-            current_interval <- beginning_time
-            intervals[intervals$Unit == j, ][index, 2] <- current_interval
-            index <- index + 1
-            beginning_time <- "not this time"
-
-          } else {
-            intervals[intervals$Unit == j, ][index, 2] <- current_interval
-            index <- index + 1
-            beginning_time <- "not this time"
-          }
-        }
-      }
+  # Check if all variables in model matrix & special.NA is not selected:
+  # (Note: special.NA would otherwise be equal to NA, and thus pointless)
+  if(sum(variable.names %in% all.vars(formula(fit))) == length(variable.names) &
+     missing(special.NA)){
+    if("Zelig" %in% class(fit)){
+      data <-  na.omit(fit$originaldata)
+    } else {
+      data <-  fit$model
     }
 
-    unit.time.included[unit.time.included$Unit == j, 2] <- paste0(unique(intervals[is.na(intervals$intervals) == FALSE & intervals$Unit == j, 2]) , collapse = ", ")
+    # Else attempt to find source data in parent environment:
+    } else {
+  if("Zelig" %in% class(fit)){
+    data <-  as.data.frame(eval(fit$model.call[[3]], envir= parent.env(environment())))
+  } else {
+    data <-  as.data.frame(eval(fit$call[[3]], envir= parent.env(environment())))
+  }
+  }
+}
 
+# Subsetting data frame:
+data <- data[order(data[, timevar]), unique(c(timevar, unitvar, variable.names))]
 
-    unit.time.included$n.times[unit.time.included$Unit == j] <- length(unique(coverage.list[coverage.list$Unit == j & is.na(coverage.list$Time) == FALSE, 2]))
+# Assessing missingness:
+data$missing <- !complete.cases(data)
 
-    unit.time.included$n[unit.time.included$Unit == j] <- sum(coverage.list[as.character(coverage.list$Unit) == j, 3], na.rm = TRUE)
+# Check if any complete cases:
+if(sum(!data$missing) == 0){
+  stop("For these variables, your data has no complete cases")
+}
+
+# Generating a summary data frame detailing the unit and time combinations present in the data (and their number, if data is 3-dimensional):
+coverage_df <- as.data.frame(table(data[!data$missing, unitvar], data[!data$missing, timevar]))
+colnames(coverage_df) <- c("Unit", "Time", "N")
+coverage_df[, c("Time", "N")] <- lapply(coverage_df[, c("Time", "N")], FUN = function(x){as.numeric(as.character(x))})
+coverage_df[, "Unit"] <- as.character(coverage_df$Unit)
+
+# Adding special N column if specified:
+if(missing(special.NA) == FALSE){
+  special.NA.df <- unique(data[,c(unitvar, timevar, special.NA)])
+  colnames(special.NA.df) <- c("Unit", "Time", "special.NA")
+  coverage_df <- merge(coverage_df, special.NA.df, all.x = TRUE, by = c("Time", "Unit"))
+  coverage_df$N[is.na(coverage_df$special.NA)] <- NA
+}
+
+### Generating and return visual (default):
+if(output == "visual"){
+  library(ggplot2, quietly = TRUE)
+
+  # Parameter tweaked to make things a bit more pretty
+  base_size <- 9
+  coverage_df <<- coverage_df
+
+  # Eases alphabetic sort
+  coverage_df$Unit <- as.factor(coverage_df$Unit)
+  coverage_df$Time <- as.factor(coverage_df$Time)
+
+  p <- ggplot(coverage_df, aes(Time, factor(coverage_df$Unit, levels = unique(coverage_df$Unit[sort(coverage_df$Unit, decreasing = TRUE)]))))
+  p <- p+ geom_tile(aes(fill = N), colour = 'white')
+  p <- p+ scale_fill_gradient(low = 'white', high = 'steelblue', na.value = "lightgrey")
+  p <- p+ theme_grey(base_size = base_size) + labs(x = '', y = '') +
+    scale_x_discrete(expand = c(0, 0),
+                     breaks=pretty(as.numeric(as.character(coverage_df$Time)),
+                                   n=20)) +
+    scale_y_discrete(expand = c(0, 0)) +
+    theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt"), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage_df[,1]))))))+
+    theme(...)
+  return(p)
+}
+
+### Else generate summary data frame by unit:
+# Constructing container data frame:
+unit_coverage_df <- data.frame(Unit = unique(coverage_df$Unit[!coverage_df$N == 0]),
+                               Time = rep(NA, length(unique(coverage_df$Unit[!coverage_df$N == 0]))))
+
+# Summarizing time coverage by unit, storing it as set of unique values:
+  for (i in 1:length(unique(unit_coverage_df$Unit))){
+    unit_coverage_df$Time[[i]] <- list(unique(
+      coverage_df$Time[coverage_df$Unit == unit_coverage_df$Unit[i] &
+                         coverage_df$N > 0]))
   }
 
-  # Changing column names
-  colnames(unit.time.included) <- c("Unit", "Covered time ", "Total time coverage", "Total Observations")
+# Summarizing these as intervals:
+unit_coverage_df$Time <- unlist(lapply(unit_coverage_df$Time, FUN = function(t){
+  t <- unlist(t)
 
-  # Reordering the columns
-  unit.time.included <- unit.time.included[,c(1,4,3,2)]
+  # Find starts of intervals
+  starts <- t[c(TRUE, t[-1] - t[-length(t)] != data.frequency)]
 
-  # Reordering the rows (alphabetically)
-  coverage.summary <<- unit.time.included[order(as.character(unit.time.included$Unit)),]
+  # Find ends of intervals
+  ends <- t[c(t[-1], 0) - t != data.frequency]
 
-  # Adding "special.NA" column if special.NA specified
-  if(missing(special.NA) == FALSE){
-    special.NA.df <- unique(data[,c(unitvar, timevar, special.NA)])
-    colnames(special.NA.df) <- c("Unit", "Time", "special.NA")
-    coverage <- merge(coverage, special.NA.df, all.x = TRUE, by = c("Time", "Unit"))
-    coverage$special.NA <- ifelse(is.na(coverage$special.NA) == TRUE, TRUE, FALSE)
-  }
-  
-  # Writing to global environment
-  coverage.df <<- coverage
-  
-  ## Printing code for visualization if requested:
-  if(missing(visual.source) == FALSE){
-    if(visual.source == TRUE){
+  # Combine the two
+  intervals <- paste(starts, ends,
+                           sep = "-")
 
-      if(missing(special.NA) == FALSE){
-        
-        print("coverage.df$N <- ifelse(coverage.df$special.NA == TRUE, NA, coverage.df$N)")  
-        print("base_size <- 9") 
-        print("p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt')), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage.df[,1])))))") 
-        
-        } else {  
-        print("library(ggplot2)")
-        print("base_size <- 9") 
-        print("p <- ggplot(coverage.df, aes(Time, factor(coverage.df$Unit, levels = unique(coverage.df$Unit[sort(coverage.df$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = 'grey') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage.df$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), 'pt')), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage.df[,1])))))") 
-        }
-    }
-  }
-  
-  ## Outputting latex table if requested
-  if(missing(output) == FALSE){
-    if(output == "latex.table"){
+  # Avoid double-listing lonely time-unit observations:
+  intervals[ends == starts] <- starts[ends == starts]
+
+  return(paste(intervals, collapse = ", "))
+}))
+
+# Summarizing total number of observations:
+unit_coverage_df$Total_N <- unlist(lapply(unit_coverage_df$Unit, FUN = function(i){
+  sum(coverage_df$N[coverage_df$Unit == i])
+}))
+
+# Reordering the rows (alphabetically)
+unit_coverage_df <- unit_coverage_df[order(unit_coverage_df$Unit), ]
+
+## Return data frame if requested
+if(output == "data.frame"){
+  return(unit_coverage_df)
+}
+
+## Return latex table if requested
+if(output == "latex.table"){
+
+  # Changing column names to be more descriptive
+  colnames(unit_coverage_df) <- c("Unit", "Covered time", "Total Observations")
+
 
       # If smaller than 75 rows, then one table
-      if(nrow(unit.time.included) < 75){
-        return(stargazer(unit.time.included, summary=FALSE, rownames=FALSE, font.size = "tiny"))}
+      if(nrow(unit_coverage_df) < 75){
+        return(stargazer(unit_coverage_df, summary=FALSE, rownames=FALSE, font.size = "tiny", ...))}
 
       # If larger than 75 rows but smaller than 150, then two tables.
-      if(nrow(unit.time.included) >= 75 & nrow(unit.time.included) < 150){
-        return(output <- c(stargazer(unit.time.included[1:round(nrow(unit.time.included)/2), ], summary=FALSE, rownames=FALSE, font.size = "tiny"),
+      if(nrow(unit_coverage_df) >= 75 & nrow(unit_coverage_df) < 150){
+        return(output <- c(stargazer(unit_coverage_df[1:round(nrow(unit_coverage_df)/2), ], summary=FALSE, rownames=FALSE, font.size = "tiny", ...),
 
-                           stargazer(unit.time.included[(1+round(nrow(unit.time.included)/2)):nrow(unit.time.included), ], summary=FALSE, rownames=FALSE, font.size = "tiny")))}
+                           stargazer(unit_coverage_df[(1+round(nrow(unit_coverage_df)/2)):nrow(unit_coverage_df), ], summary=FALSE, rownames=FALSE, font.size = "tiny", ...)))}
 
       # If larger than 150, then three tables.
-      if(nrow(unit.time.included) >= 150){
-        return(output <- c(stargazer(unit.time.included[1:round(nrow(unit.time.included)/3), ], summary=FALSE, rownames=FALSE, font.size = "tiny"),
+      if(nrow(unit_coverage_df) >= 150){
+        return(output <- c(stargazer(unit_coverage_df[1:round(nrow(unit_coverage_df)/3), ], summary=FALSE, rownames=FALSE, font.size = "tiny", ...),
 
-                           stargazer(unit.time.included[(1+round(nrow(unit.time.included)/3)):(1+2*round(nrow(unit.time.included)/3)), ], summary=FALSE, rownames=FALSE, font.size = "tiny"),
+                           stargazer(unit_coverage_df[(1+round(nrow(unit_coverage_df)/3)):(1+2*round(nrow(unit_coverage_df)/3)), ], summary=FALSE, rownames=FALSE, font.size = "tiny", ...),
 
-                           stargazer(unit.time.included[(1+2*round(nrow(unit.time.included)/3)):nrow(unit.time.included), ], summary=FALSE, rownames=FALSE, font.size = "tiny")))
+                           stargazer(unit_coverage_df[(1+2*round(nrow(unit_coverage_df)/3)):nrow(unit_coverage_df), ], summary=FALSE, rownames=FALSE, font.size = "tiny", ...)))
       }
     }
-  }
 
-  ## Generating visual if requested:
-
-  if(missing(output) == FALSE){
-    if(output == "visual"){
-
-      suppressMessages(library(ggplot2, quietly = TRUE))
-
-      if(missing(special.NA) == FALSE){
-          
-          coverage$N <- ifelse(coverage$special.NA == TRUE, NA, coverage$N)  
-          base_size <- 9
-          p <- ggplot(coverage, aes(Time, factor(coverage$Unit, levels = unique(coverage$Unit[sort(coverage$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue', na.value = "lightgrey") + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt"), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage[,1])))))) 
-        
-          return(p)
-            
-          } else {
-      
-          base_size <- 9
-          p <- ggplot(coverage, aes(Time, factor(coverage$Unit, levels = unique(coverage$Unit[sort(coverage$Unit, decreasing = TRUE)])))) + geom_tile(aes(fill = N), colour = 'white') + scale_fill_gradient(low = 'white', high = 'steelblue') + theme_grey(base_size = base_size) + labs(x = '', y = '') + scale_x_discrete(expand = c(0, 0), breaks=pretty(as.numeric(as.character(coverage$Time)), n=20)) + scale_y_discrete(expand = c(0, 0)) + theme(legend.position = 'none', axis.text.x = element_text(size = base_size * 0.8, angle = 330, hjust = 0, colour = 'grey50'), plot.margin = unit(c(5, 15, 5, 5), "pt"), axis.text.y = element_text(size = 45/(sqrt(length(unique(coverage[,1])))))) 
-      
-      
-          return(p) }
-    }
-  }
 }

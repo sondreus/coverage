@@ -4,83 +4,65 @@
 \alias{coverage}
 \title{Coverage - Unit and Time}
 \usage{
-coverage(fit, timevar, unitvar, data, variable.names, output, visual.source,
-  special.NA)
+coverage(fit, timevar = "year", unitvar = "country", data,
+  variable.names, special.NA, output = c("visual", "data.frame",
+  "latex.table")[1], data.frequency = 1, ...)
 }
 \arguments{
-\item{fit}{A fitted object. Currently supports base R lm().}
+\item{fit}{A fitted object.}
 
-\item{timevar}{Your time variable}
+\item{timevar}{Time variable. Defaults to "year".}
 
-\item{unitvar}{Your unit variable}
+\item{unitvar}{Unit variable. Defaults to "country".}
 
-\item{data}{Data to be investigated. If none is supplied, defaults to data used in "\code{fit}" if fit is in supported format.}
+\item{data}{Data to be investigated. If none is supplied, attempts to use same data as "\code{fit}", first by considering its model matrix, and - if variables are missing (such as timevar and unitvar) - by looking for the source data in the global environment. (Optional)}
 
-\item{variable.names}{Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}.}
+\item{variable.names}{Variables to be checked for coverage. If none is supplied, defaults to variables used in \code{fit}, or if fit not provided, all variables in data. (Optional)}
 
-\item{output}{Desired extra output: "visual" or "latex.table". Former depends on requires the package \code{ggplot2}, latter requires the package \code{stargazer}, both available on CRAN.}
+\item{special.NA}{Variable that if missing will indicate "special" missingness. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered. (Optional)}
 
-\item{visual.source}{If TRUE, prints ggplot2 code used to create visual.}
+\item{output}{Desired extra output: "visual" (default), "data.frame", or "latex.table". First depends on \code{ggplot2}, last \code{stargazer}, both available on CRAN.}
 
-\item{special.NA}{Variable that if missing will indicate "special" missingness if "visual" output is specified. Can be used to distinguish observations with missing data from time-unit combinations which did not exist or were not considered.}
+\item{data.frequency}{Integer specifying the increments between observations. Defaults to 1.}
+
+\item{...}{Additional arguments passed to ggplot2's \code{theme} function, or \code{stargazer}, depending on output selected. (Optional)}
 }
 \description{
 This function provides you with a summary of your time and unit coverage for analysis conducted with row-wise deletion in the presence of missing data. Examples of such analysis include standard regression analysis and most implementations of maximum likelihood. By default provides a data frame of unit and time coverage ("coverage.df") and a summary ("coverage.summary"), can also additionally supply a latex table or a visualization of coverage. Supports 3-dimensional data by providing total number of observations in tables, and "heatmap" of observations in visual.
 }
 \examples{
 library(WDI)
-wdi.sample <- WDI(indicator=c('NY.GDP.PCAP.KD',
-                             'BG.GSR.NFSV.GD.ZS',
-                             'SE.ADT.LITR.FE.ZS',
-                             'NV.AGR.TOTL.ZS',
-                             'IT.TEL.TOTL.P3'),
+wdi.sample <- WDI(indicator=c("GDPPC" = "NY.GDP.PCAP.KD",
+                             "services_gdp" = "BG.GSR.NFSV.GD.ZS",
+                             "agriculture_gdp" = "NV.AGR.TOTL.ZS",
+                             "telephones" = "IT.TEL.TOTL.P3"),
+                             start=1970, end=2012,
+                             country="all")
 
-                             country=c('MX','CA',
-                             'US','TZ'),
+lm.fit <- lm(GDPPC ~ ., data = wdi.sample)
 
-                             start=1950, end=2012)
+coverage(lm.fit)
 
-colnames(wdi.sample)[4:8] <- c("GDPPC",
-                               "services_gdp",
-                               "literacy_women",
-                               "agriculture_gdp",
-                               "telephones")
-
-lm.fit <- lm(GDPPC ~ services_gdp, data = wdi.sample)
-
-coverage(fit = lm.fit, timevar = "year",
-         unitvar = "country")
-
-head(coverage.df)
-
-# For visuals, use:
-coverage(fit = lm.fit, timevar = "year",
-         unitvar = "country", output = "visual")
-
-# For latex tables, use:
-coverage(fit = lm.fit, timevar = "year",
-         unitvar = "country", output = "latex.table")
-
-# Supplying a fit is not required, and it may be easier
-# to compare the consequences of different model specifications
-# by simply providing the variable names:
-coverage(timevar = "year", unitvar = "country",
-         data = wdi.sample,
+# One may also specify variables explicitly:
+coverage(timevar = "year",
+         unitvar = "country",
          variable.names = c("GDPPC",
-                            "agriculture_gdp"),
-         output = "visual")
+                  "services_gdp",
+                  "agriculture_gdp",
+                  "telephones"),
+         data = wdi.sample)
 
-# vs:
-coverage(timevar = "year", unitvar = "country",
-         data = wdi.sample,
-         variable.names = c("GDPPC",
-         "services_gdp"),
-         output = "visual")
+# Or request data.frame or latex.table output:
 
+# For data.frame, use:
+coverage(fit = lm.fit, output = "data.frame")
+
+# For latex table, use:
+coverage(fit = lm.fit, output = "latex.table")
 
 }
+\keyword{NA}
 \keyword{coverage}
 \keyword{lm}
 \keyword{missing}
 \keyword{missingness}
-
