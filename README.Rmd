@@ -8,6 +8,8 @@ fig.caption: yes
 
 ```{r set-options, echo=FALSE, cache=FALSE}
 options(width = 150)
+library(ggplot2)
+library(stargazer)
 library(coverage)
 ```
 
@@ -92,13 +94,14 @@ Let's use this functionality to visually explore our data:
 ```{r}
  coverage(data = wdi.sample,
           variable.names = c("GDPPC",
-                             "agriculture_gdp"),
+                             "agriculture_gdp", 
+                             "telephones"),
           output = "visual")
 
  # vs:
  coverage(data = wdi.sample,
           variable.names = c("GDPPC",
-          "services_gdp"),
+          "telephones"),
           output = "visual")
 
 ```
